@@ -198,6 +198,9 @@ class TransformCxCascade(TransformationPass):
         # loop through layers until a max limit is reached
         while count < min([2 * (self._num_qubits - 1), len(self._layers) - layer_id]):
             for gate in self._layers[layer_id + count].op_nodes():
+                if len(off_limits) == self._num_qubits:
+                    double_break = True
+                    break
                 logger.debug('Last layer: %d' % last_layer)
                 logger.debug('Layer: %d' % (layer_id + count))
                 logger.debug('Off limits: %s' % off_limits)
@@ -214,7 +217,8 @@ class TransformCxCascade(TransformationPass):
                         g_target = self._wires_to_id[gate.qargs[1]]
                         logger.debug('Check CNOT Name: %s\tType: %s\tQargs: %s\tCargs: %s\tCond: %s' % (
                             gate.name, gate.type, [g_control, g_target], gate.cargs, gate.condition))
-                        if g_control == target:
+                        # check if the CNOT interrupts the cascade
+                        if g_control == target or g_target == target:
                             double_break = True
                             break
                         if g_control in off_limits or g_target in off_limits:
@@ -238,8 +242,7 @@ class TransformCxCascade(TransformationPass):
                             controls.append(g_control)
                             used.add(g_control)
                             skip.append(gate)
-                        # check if the CNOT interrupts the cascade
-                        elif g_target != target and g_control != target:
+                        else:
                             # remember to put the CNOT after the transformation
                             if g_target not in used and g_control not in used:
                                 if last_layer < layer_id + count:
@@ -254,10 +257,6 @@ class TransformCxCascade(TransformationPass):
                                     used.add(g_control)
                                 if g_target not in used:
                                     used.add(g_target)
-                        else:
-                            # break the loop if the CNOT interrupts the cascade
-                            double_break = True
-                            break
                     else:
                         # ignore gates acting on off limits qubits
                         double_continue = False
@@ -409,6 +408,9 @@ class TransformCxCascade(TransformationPass):
         # loop through layers until a max limit is reached
         while count < min([2 * (self._num_qubits-1), len(self._layers)-layer_id]):
             for gate in self._layers[layer_id + count].op_nodes():
+                if len(off_limits) == self._num_qubits:
+                    double_break = True
+                    break
                 logger.debug('Last layer: %d' % last_layer)
                 logger.debug('Layer: %d' % (layer_id+count))
                 logger.debug('Off limits: %s' % off_limits)
@@ -425,7 +427,8 @@ class TransformCxCascade(TransformationPass):
                         g_target = self._wires_to_id[gate.qargs[1]]
                         logger.debug('Check CNOT Name: %s\tType: %s\tQargs: %s\tCargs: %s\tCond: %s' % (
                             gate.name, gate.type, [g_control, g_target], gate.cargs, gate.condition))
-                        if g_target == control:
+                        # check if the CNOT interrupts the cascade
+                        if g_target == control or g_control == control:
                             double_break = True
                             break
                         if g_control in off_limits or g_target in off_limits:
@@ -451,8 +454,7 @@ class TransformCxCascade(TransformationPass):
                             targets.append(g_target)
                             used.add(g_target)
                             skip.append(gate)
-                        # check if the CNOT interrupts the cascade
-                        elif g_control != control and g_target != control:
+                        else:
                             # remember to put the CNOT after the transformation
                             if g_control not in used and g_target not in used:
                                 if last_layer < layer_id+count:
@@ -467,10 +469,6 @@ class TransformCxCascade(TransformationPass):
                                     used.add(g_control)
                                 if g_target not in used:
                                     used.add(g_target)
-                        else:
-                            # break the loop if the CNOT interrupts the cascade
-                            double_break = True
-                            break
                     else:
                         # ignore gates acting on off limits qubits
                         double_continue = False
