@@ -39,18 +39,18 @@ class NoiseAdaptiveSwap(TransformationPass):
         else:
             self._n_swaps = 4
         if 'next_gates' in kwargs:
-            self.next_gates = kwargs['next_gates']
+            self._next_gates = kwargs['next_gates']
         else:
-            self.next_gates = 10
+            self._next_gates = 10
 
         self._qreg = None
         if isinstance(coupling_map, list):
-            self.coupling_map = CouplingMap(coupling_map)
+            self._coupling_map = CouplingMap(coupling_map)
         elif isinstance(coupling_map, CouplingMap):
-            self.coupling_map = coupling_map
+            self._coupling_map = coupling_map
         else:
             raise TranspilerError('Coupling map of type %s is not a valid option.' % coupling_map.__class__)
-        self.coupling_graph = self.coupling_map.graph.to_undirected()
+        self._coupling_graph = self._coupling_map.graph.to_undirected()
 
         self.backend_prop = backend_prop
         self.swap_graph = nx.DiGraph()
@@ -112,7 +112,7 @@ class NoiseAdaptiveSwap(TransformationPass):
         if len(dag.qregs) != 1 or dag.qregs.get('q', None) is None:
             raise TranspilerError('Basic swap runs on physical circuits only')
 
-        if len(dag.qubits()) > len(self.coupling_map.physical_qubits):
+        if len(dag.qubits()) > len(self._coupling_map.physical_qubits):
             raise TranspilerError('The layout does not match the amount of qubits in the DAG')
 
         canonical_register = dag.qregs['q']
@@ -239,7 +239,7 @@ class NoiseAdaptiveSwap(TransformationPass):
             if not busy.intersection(qargs):
                 if len(qargs) == 1:
                     executed.append(self.execute_gate(gate, layout))
-                elif self.coupling_map.distance(*[layout[q] for q in qargs]) == 1:
+                elif self._coupling_map.distance(*[layout[q] for q in qargs]) == 1:
                     logger.debug('Executed CNOT with qargs: %s\n' % gate.qargs)
                     executed.append(self.execute_gate(gate, layout))
                 else:
@@ -275,16 +275,16 @@ class NoiseAdaptiveSwap(TransformationPass):
         extra_swaps = []
 
         swap = {'swap': None, 'score': None}
-        for q in self.coupling_graph[qubits[0]]:
-            swap['swap'], swap['score'] = self.score_swap([qubits[0], q], temp_layout, to_execute, next_gates=self.next_gates)
+        for q in self._coupling_graph[qubits[0]]:
+            swap['swap'], swap['score'] = self.score_swap([qubits[0], q], temp_layout, to_execute, next_gates=self._next_gates)
             extra_swaps.append(swap)
-        for q in self.coupling_graph[qubits[1]]:
-            swap['swap'], swap['score'] = self.score_swap([qubits[1], q], temp_layout, to_execute, next_gates=self.next_gates)
+        for q in self._coupling_graph[qubits[1]]:
+            swap['swap'], swap['score'] = self.score_swap([qubits[1], q], temp_layout, to_execute, next_gates=self._next_gates)
             extra_swaps.append(swap)
 
         # most reliab qubits[0] to qubits[1]
         right = self.swap_paths[qubits[1]][qubits[0]]
-        swap['swap'], swap['score'] = self.score_swap([qubits[0], right], temp_layout, to_execute, next_gates=self.next_gates)
+        swap['swap'], swap['score'] = self.score_swap([qubits[0], right], temp_layout, to_execute, next_gates=self._next_gates)
         possible_swaps.append(swap)
         extra_swaps.remove(swap)
         n -= 1
@@ -293,7 +293,7 @@ class NoiseAdaptiveSwap(TransformationPass):
 
         # most reliab qubits[1] to qubits[0]
         right = self.swap_paths[qubits[0]][qubits[1]]
-        swap['swap'], swap['score'] = self.score_swap([qubits[1], right], temp_layout, to_execute, next_gates=self.next_gates)
+        swap['swap'], swap['score'] = self.score_swap([qubits[1], right], temp_layout, to_execute, next_gates=self._next_gates)
         possible_swaps.append(swap)
         extra_swaps.remove(swap)
         n -= 1
@@ -301,8 +301,8 @@ class NoiseAdaptiveSwap(TransformationPass):
             return sorted(possible_swaps, key=lambda x: x['score'], reverse=True)
 
         # shortest path if not already in possible_swaps
-        shortest_path = self.coupling_map.shortest_undirected_path(qubits[0], qubits[1])
-        swap['swap'], swap['score'] = self.score_swap([qubits[0], shortest_path[1]], temp_layout, to_execute, next_gates=self.next_gates)
+        shortest_path = self._coupling_map.shortest_undirected_path(qubits[0], qubits[1])
+        swap['swap'], swap['score'] = self.score_swap([qubits[0], shortest_path[1]], temp_layout, to_execute, next_gates=self._next_gates)
         if swap not in possible_swaps:
             possible_swaps.append(swap)
             extra_swaps.remove(swap)
@@ -310,7 +310,7 @@ class NoiseAdaptiveSwap(TransformationPass):
             if n == 0:
                 return sorted(possible_swaps, key=lambda x: x['score'], reverse=True)
 
-        swap['swap'], swap['score'] = self.score_swap([qubits[1], shortest_path[-2]], temp_layout, to_execute, next_gates=self.next_gates)
+        swap['swap'], swap['score'] = self.score_swap([qubits[1], shortest_path[-2]], temp_layout, to_execute, next_gates=self._next_gates)
         if swap not in possible_swaps:
             possible_swaps.append(swap)
             extra_swaps.remove(swap)
@@ -350,8 +350,8 @@ class NoiseAdaptiveSwap(TransformationPass):
         executed = 0
         for gate in to_execute[:next_gates]:
             if gate.name not in ["barrier", "snapshot", "save", "load", "noise"] and len(gate.qargs) == 2 and \
-                    self.coupling_map.distance(self.get_phys_qubit(gate.qargs[0], temp_layout),
-                                               self.get_phys_qubit(gate.qargs[1], temp_layout)) == 1:
+                    self._coupling_map.distance(self.get_phys_qubit(gate.qargs[0], temp_layout),
+                                                self.get_phys_qubit(gate.qargs[1], temp_layout)) == 1:
                 executed += 1
 
         return swap, (executed, reliab)
