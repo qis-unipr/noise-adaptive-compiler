@@ -183,7 +183,8 @@ class NoiseAdaptiveSwap(TransformationPass):
         return {
             'to_execute': best_step['to_execute'],
             'executed': executed + [swap_gate] + best_step['executed'],
-            'score': (len(executed) + len(best_step['executed']), best_step['score'][1] * next_swap['score'][1]),
+            'score': (
+                len(executed) + len(best_step['executed']), best_step['score'][1] * next_swap['score'][1]),
             'layout': best_step['layout']
         }
 
@@ -276,15 +277,18 @@ class NoiseAdaptiveSwap(TransformationPass):
 
         swap = {'swap': None, 'score': None}
         for q in self._coupling_graph[qubits[0]]:
-            swap['swap'], swap['score'] = self.score_swap([qubits[0], q], temp_layout, to_execute, next_gates=self._next_gates)
+            swap['swap'], swap['score'] = self.score_swap([qubits[0], q], temp_layout, to_execute,
+                                                          next_gates=self._next_gates)
             extra_swaps.append(swap)
         for q in self._coupling_graph[qubits[1]]:
-            swap['swap'], swap['score'] = self.score_swap([qubits[1], q], temp_layout, to_execute, next_gates=self._next_gates)
+            swap['swap'], swap['score'] = self.score_swap([qubits[1], q], temp_layout, to_execute,
+                                                          next_gates=self._next_gates)
             extra_swaps.append(swap)
 
         # most reliab qubits[0] to qubits[1]
         right = self.swap_paths[qubits[1]][qubits[0]]
-        swap['swap'], swap['score'] = self.score_swap([qubits[0], right], temp_layout, to_execute, next_gates=self._next_gates)
+        swap['swap'], swap['score'] = self.score_swap([qubits[0], right], temp_layout, to_execute,
+                                                      next_gates=self._next_gates)
         possible_swaps.append(swap)
         extra_swaps.remove(swap)
         n -= 1
@@ -293,7 +297,8 @@ class NoiseAdaptiveSwap(TransformationPass):
 
         # most reliab qubits[1] to qubits[0]
         right = self.swap_paths[qubits[0]][qubits[1]]
-        swap['swap'], swap['score'] = self.score_swap([qubits[1], right], temp_layout, to_execute, next_gates=self._next_gates)
+        swap['swap'], swap['score'] = self.score_swap([qubits[1], right], temp_layout, to_execute,
+                                                      next_gates=self._next_gates)
         possible_swaps.append(swap)
         extra_swaps.remove(swap)
         n -= 1
@@ -302,7 +307,8 @@ class NoiseAdaptiveSwap(TransformationPass):
 
         # shortest path if not already in possible_swaps
         shortest_path = self._coupling_map.shortest_undirected_path(qubits[0], qubits[1])
-        swap['swap'], swap['score'] = self.score_swap([qubits[0], shortest_path[1]], temp_layout, to_execute, next_gates=self._next_gates)
+        swap['swap'], swap['score'] = self.score_swap([qubits[0], shortest_path[1]], temp_layout, to_execute,
+                                                      next_gates=self._next_gates)
         if swap not in possible_swaps:
             possible_swaps.append(swap)
             extra_swaps.remove(swap)
@@ -310,7 +316,8 @@ class NoiseAdaptiveSwap(TransformationPass):
             if n == 0:
                 return sorted(possible_swaps, key=lambda x: x['score'], reverse=True)
 
-        swap['swap'], swap['score'] = self.score_swap([qubits[1], shortest_path[-2]], temp_layout, to_execute, next_gates=self._next_gates)
+        swap['swap'], swap['score'] = self.score_swap([qubits[1], shortest_path[-2]], temp_layout, to_execute,
+                                                      next_gates=self._next_gates)
         if swap not in possible_swaps:
             possible_swaps.append(swap)
             extra_swaps.remove(swap)
@@ -345,14 +352,18 @@ class NoiseAdaptiveSwap(TransformationPass):
                         [self.swap_reliabs[self.get_phys_qubit(gate.qargs[0], temp_layout)]
                          [self.get_phys_qubit(gate.qargs[1], temp_layout)]
                          for gate in to_execute[:next_gates]
-                         if gate.name not in ["barrier", "snapshot", "save", "load", "noise"] and len(gate.qargs) == 2])
+                         if gate.name not in ["barrier", "snapshot", "save", "load", "noise"] and \
+                         len(gate.qargs) == 2])
 
         executed = 0
-        for gate in to_execute[:next_gates]:
-            if gate.name not in ["barrier", "snapshot", "save", "load", "noise"] and len(gate.qargs) == 2 and \
-                    self._coupling_map.distance(self.get_phys_qubit(gate.qargs[0], temp_layout),
-                                                self.get_phys_qubit(gate.qargs[1], temp_layout)) == 1:
-                executed += 1
+        for gate in to_execute:
+            if gate.name not in ["barrier", "snapshot", "save", "load", "noise"] and len(gate.qargs) == 2:
+                if self._coupling_map.distance(self.get_phys_qubit(gate.qargs[0], temp_layout),
+                                               self.get_phys_qubit(gate.qargs[1], temp_layout)) == 1:
+                    executed += 1
+                next_gates -= 1
+                if next_gates == 0:
+                    break
 
         return swap, (executed, reliab)
 
