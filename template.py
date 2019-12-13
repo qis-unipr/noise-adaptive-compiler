@@ -17,18 +17,20 @@
 
 from qiskit import execute, Aer, QuantumCircuit
 from qiskit.extensions import SwapGate
+from qiskit.providers.aer.noise.device import basic_device_noise_model
 from qiskit.test.base import dicts_almost_equal
 from qiskit.test.mock import FakeMelbourne  # NB will need to install dev requirements
+from qiskit.transpiler import PassManager
 from qiskit.transpiler.passes import FullAncillaAllocation, EnlargeWithAncilla, ApplyLayout, \
     BarrierBeforeFinalMeasurements, Unroll3qOrMore, Decompose, CheckCXDirection, CXDirection, Depth, FixedPoint, \
     RemoveResetInZeroState, ConsolidateBlocks, Collect2qBlocks, Unroller, Optimize1qGates, CommutativeCancellation, \
     OptimizeSwapBeforeMeasure, RemoveDiagonalGatesBeforeMeasure
-from qiskit.transpiler import PassManager
-from qiskit.providers.aer.noise.device import basic_device_noise_model
 
 from passes import ChainLayout, TransformCxCascade, NoiseAdaptiveSwap
 
 """
+Implementation based on qiskit 0.13.0
+
 The proposed solution comprises three passes, one analysis pass
 to find an initial mapping and two transformation passes.
 
