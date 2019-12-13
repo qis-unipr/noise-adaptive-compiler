@@ -240,10 +240,10 @@ class NoiseAdaptiveSwap(TransformationPass):
                 if len(qargs) == 1:
                     executed.append(self.execute_gate(gate, layout))
                 elif self._coupling_map.distance(*[layout[q] for q in qargs]) == 1:
-                    logger.debug('Executed CNOT with qargs: %s\n' % gate.qargs)
+                    logger.debug('Executed two-qubit gate with qargs: %s\n' % gate.qargs)
                     executed.append(self.execute_gate(gate, layout))
                 else:
-                    logger.debug('Remote CNOT with qargs: %s\n' % gate.qargs)
+                    logger.debug('Remote gate with qargs: %s\n' % gate.qargs)
                     to_execute.append(gate)
                     to_map.append(gate)
                     busy.update(qargs)
