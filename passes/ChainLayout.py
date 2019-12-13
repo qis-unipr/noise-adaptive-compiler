@@ -14,6 +14,7 @@ class ChainLayout(AnalysisPass):
     Sometimes not all qubits in a device can be arranged in a chain.
     If necessary, such outliers will be inserted in the chain after one of their neighbors.
     """
+
     def __init__(self, coupling_map, backend_prop=None):
         """ChainLayout initializer.
 
@@ -80,7 +81,8 @@ class ChainLayout(AnalysisPass):
         If necessary, such outliers will be inserted in the chain after one of their neighbors.
 
         Args:
-            num_qubits (int): number of virtual qubits, defaults to the number of qubits of the coupling chain.
+            num_qubits (int): number of virtual qubits,
+                defaults to the number of qubits of the coupling chain.
         Raises:
             TranspilerError: if invalid options
         """
@@ -110,8 +112,8 @@ class ChainLayout(AnalysisPass):
             logger.debug('Neighbors: %s' % str(neighbors))
             # try to select next qubit from neighbors of last connected qubit
             if no_neighbors is False:
-                if current+1 in neighbors:
-                    next = current+1
+                if current + 1 in neighbors:
+                    next = current + 1
                 else:
                     next = min(neighbors)
             else:
@@ -120,7 +122,8 @@ class ChainLayout(AnalysisPass):
                 if self.backend_prop is None:
                     isolated_with_data.append((full_map[-2], current))
                 else:
-                    isolated_with_data.append((full_map[-2], current, self.cx_reliab[(full_map[-2], current)]))
+                    isolated_with_data.append(
+                        (full_map[-2], current, self.cx_reliab[(full_map[-2], current)]))
                 isolated.append(current)
                 full_map.remove(current)
                 current = full_map[-1]
@@ -140,7 +143,7 @@ class ChainLayout(AnalysisPass):
             logger.debug('Isolated: %s' % str(isolated_with_data))
 
             # check that there are still qubits to explore
-            if len(explored) < self.coupling_map.size()-1:
+            if len(explored) < self.coupling_map.size() - 1:
                 neighbors1 = []
                 for n1 in self.coupling_graph[next].keys():
                     if n1 not in explored:
@@ -201,7 +204,7 @@ class ChainLayout(AnalysisPass):
                 for next in isolated_with_data:
                     if next[0] in full_map:
                         logger.debug(next)
-                        full_map.insert(full_map.index(next[0])+1, next[1])
+                        full_map.insert(full_map.index(next[0]) + 1, next[1])
                         isolated_with_data.remove(next)
                         isolated.remove(next[1])
                         remaining -= 1
@@ -231,19 +234,19 @@ class ChainLayout(AnalysisPass):
                 tot_reliab = 0
             else:
                 tot_reliab = 1
-            for q in range(len(sub_set)-1):
-                if sub_set[q+1] not in self.coupling_graph[q].keys():
-                    path = shortest_path(self.coupling_graph, source=sub_set[q], target=sub_set[q+1])
-                    for p in range(len(path)-1):
+            for q in range(len(sub_set) - 1):
+                if sub_set[q + 1] not in self.coupling_graph[q].keys():
+                    path = shortest_path(self.coupling_graph, source=sub_set[q], target=sub_set[q + 1])
+                    for p in range(len(path) - 1):
                         if self.backend_prop is None:
                             tot_reliab += 1
                         else:
-                            tot_reliab *= self.cx_reliab[(path[p], path[p+1])]**3
+                            tot_reliab *= self.cx_reliab[(path[p], path[p + 1])] ** 3
                 else:
                     if self.backend_prop is None:
                         tot_reliab += 1
                     else:
-                        tot_reliab *= self.cx_reliab[(sub_set[q], sub_set[q+1])]
+                        tot_reliab *= self.cx_reliab[(sub_set[q], sub_set[q + 1])]
             if self.backend_prop is None:
                 if tot_reliab < best_reliab:
                     best_reliab = tot_reliab

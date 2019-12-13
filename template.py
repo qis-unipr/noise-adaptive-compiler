@@ -22,9 +22,9 @@ from qiskit.test.base import dicts_almost_equal
 from qiskit.test.mock import FakeMelbourne  # NB will need to install dev requirements
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.passes import FullAncillaAllocation, EnlargeWithAncilla, ApplyLayout, \
-    BarrierBeforeFinalMeasurements, Unroll3qOrMore, Decompose, CheckCXDirection, CXDirection, Depth, FixedPoint, \
-    RemoveResetInZeroState, ConsolidateBlocks, Collect2qBlocks, Unroller, Optimize1qGates, CommutativeCancellation, \
-    OptimizeSwapBeforeMeasure, RemoveDiagonalGatesBeforeMeasure
+    BarrierBeforeFinalMeasurements, Unroll3qOrMore, Decompose, CheckCXDirection, CXDirection, Depth, \
+    FixedPoint, RemoveResetInZeroState, ConsolidateBlocks, Collect2qBlocks, Unroller, Optimize1qGates, \
+    CommutativeCancellation, OptimizeSwapBeforeMeasure, RemoveDiagonalGatesBeforeMeasure
 
 from passes import ChainLayout, TransformCxCascade, NoiseAdaptiveSwap
 
@@ -98,6 +98,7 @@ pass_manager.append([
 def _direction_condition(property_set):
     return not property_set['is_direction_mapped']
 
+
 pass_manager.append([
     BarrierBeforeFinalMeasurements(),
     Unroll3qOrMore(),
@@ -109,6 +110,7 @@ pass_manager.append([
 def direction_condition(property_set):
     return not property_set['is_direction_mapped']
 
+
 if not coupling_map.is_symmetric:
     pass_manager.append(CheckCXDirection(coupling_map))
     pass_manager.append(CXDirection(coupling_map), condition=direction_condition)
@@ -118,6 +120,7 @@ depth_check = [Depth(), FixedPoint('depth')]
 
 def opt_control(property_set):
     return not property_set['depth_fixed_point']
+
 
 basis_gates = ['u1', 'u2', 'u3', 'cx']
 opt = [
@@ -132,8 +135,9 @@ if coupling_map and not coupling_map.is_symmetric:
     opt.append(CXDirection(coupling_map))
 pass_manager.append(depth_check + opt, do_while=opt_control)
 
-""" This allows us to simulate the noise a real device has, so that you don't have to wait for jobs to complete
-on the actual backends."""
+""" This allows us to simulate the noise a real device has, 
+so that you don't have to wait for jobs to complete on the actual backends.
+"""
 noise_model = basic_device_noise_model(properties)
 simulator = Aer.get_backend('qasm_simulator')
 

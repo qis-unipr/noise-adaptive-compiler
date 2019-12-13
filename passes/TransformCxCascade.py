@@ -1,6 +1,5 @@
 import logging
 
-
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.extensions import CnotGate, U2Gate
 from qiskit.transpiler import TransformationPass, TranspilerError
@@ -57,8 +56,9 @@ class TransformCxCascade(TransformationPass):
     def run(self, dag):
         """
         Run the CNOTCascadesTransform pass over a dag circuit.
-        After the transformation, proceeds to check for possible one-qubit gates optimizations and CNOT cancellations,
-        as subsequent CNOT nearest-neighbor sequences could create the opportunity for useful circuit simplifications.
+        After the transformation, proceeds to check for possible one-qubit gates optimizations and
+        CNOT cancellations, as subsequent CNOT nearest-neighbor sequences could create
+        the opportunity for useful circuit simplifications.
 
         Args:
             dag (DAGCircuit): the dag circuit to be searched for CNOT cascades.
@@ -101,7 +101,7 @@ class TransformCxCascade(TransformationPass):
         for i, layer in enumerate(self._layers):
             if i != 0:
                 # add nearest-neighbor CNOT sequences in the right layer
-                for gate in self._extra_layers[i-1]:
+                for gate in self._extra_layers[i - 1]:
                     new_dag.apply_operation_back(*gate)
 
             # check all gates in the layer
@@ -152,8 +152,9 @@ class TransformCxCascade(TransformationPass):
         return new_dag
 
     def check_cascade(self, gate, layer_id):
-        """Searches for a CNOT cascade, a sequence of CNOT gates where the target qubit is the same for every CNOT
-        while the control changes, and transforms it into a nearest-neighbor CNOT sequence ::
+        """Searches for a CNOT cascade, a sequence of CNOT gates where the target qubit
+        is the same for every CNOT while the control changes, and transforms it
+        into a nearest-neighbor CNOT sequence ::
 
             ---x--x--x--x---           --------x--------
                |  |  |  |                      |
@@ -236,7 +237,8 @@ class TransformCxCascade(TransformationPass):
                         logger.debug('Target-G_target: %d-%d' % (target, g_target))
                         # chek that the CNOT is part of the cascade
                         a = (g_target == target and g_control not in controls and g_control not in used)
-                        b = (descending is True and g_control > target) or (descending is False and g_control < target)
+                        b = (descending is True and g_control > target) or (
+                                    descending is False and g_control < target)
                         logger.debug('A: %s B: %s Descending: %s\n' % (a, b, descending))
                         if a and b:
                             controls.append(g_control)
@@ -296,11 +298,12 @@ class TransformCxCascade(TransformationPass):
                                 # the transformation must be applied before this gate
                                 if last_layer > layer_id + count - 1:
                                     last_layer = layer_id + count - 1
-                                for qarg in not_u+u:
+                                for qarg in not_u + u:
                                     used.add(qarg)
                                     off_limits.add(qarg)
                         else:
-                            # check if one-qubits gates either interrupt the cascade, can be applied after or before
+                            # check if one-qubits gates either interrupt the cascade,
+                            # can be applied after or before
                             qarg = self._wires_to_id[gate.qargs[0]]
                             logger.debug(gate.op.__class__)
                             logger.debug('Gate Name: %s\tType: %s\tQarg: %s\tCarg: %s\tCond: %s' % (
@@ -360,10 +363,11 @@ class TransformCxCascade(TransformationPass):
         return skip
 
     def check_inverse_cascade(self, gate, layer_id):
-        """Searches for an inverted CNOT cascade, a sequence of CNOT gates where the control qubit is the same for every CNOT
-        while the target changes, and transforms it into a nearest-neighbor CNOT sequence.
-         It is very similar to a CNOT cascade by using H gates to invert every CNOT.
-         For every H gate it adds another H gate to maintain the circuit identity::
+        """Searches for an inverted CNOT cascade, a sequence of CNOT gates where the control qubit
+        is the same for every CNOT while the target changes, and transforms it
+        into a nearest-neighbor CNOT sequence. It is very similar to a CNOT cascade
+        by using H gates to invert every CNOT. For every H gate it adds another H gate
+        to maintain the circuit identity::
 
             ---o--o--o--o---           -H-------x-------H-
                |  |  |  |                       |
@@ -406,13 +410,13 @@ class TransformCxCascade(TransformationPass):
 
         double_break = False
         # loop through layers until a max limit is reached
-        while count < min([2 * (self._num_qubits-1), len(self._layers)-layer_id]):
+        while count < min([2 * (self._num_qubits - 1), len(self._layers) - layer_id]):
             for gate in self._layers[layer_id + count].op_nodes():
                 if len(off_limits) == self._num_qubits:
                     double_break = True
                     break
                 logger.debug('Last layer: %d' % last_layer)
-                logger.debug('Layer: %d' % (layer_id+count))
+                logger.debug('Layer: %d' % (layer_id + count))
                 logger.debug('Off limits: %s' % off_limits)
                 logger.debug('Gate Name: %s\tType: %s\tQargs: %s\tCargs: %s\tCond: %s' % (
                     gate.name, gate.type, gate.qargs, gate.cargs, gate.condition))
@@ -448,7 +452,8 @@ class TransformCxCascade(TransformationPass):
                         logger.debug('Target-G_target: %d-%d' % (target, g_target))
                         # chek that the CNOT is part of the cascade
                         a = (g_control == control and g_target not in targets and g_target not in used)
-                        b = (descending is True and g_target > control) or (descending is False and g_target < control)
+                        b = (descending is True and g_target > control) or (
+                                    descending is False and g_target < control)
                         logger.debug('A: %s B: %s Descending: %s\n' % (a, b, descending))
                         if a and b:
                             targets.append(g_target)
@@ -457,14 +462,14 @@ class TransformCxCascade(TransformationPass):
                         else:
                             # remember to put the CNOT after the transformation
                             if g_control not in used and g_target not in used:
-                                if last_layer < layer_id+count:
-                                    last_layer = layer_id+count
+                                if last_layer < layer_id + count:
+                                    last_layer = layer_id + count
                             # updates used and off limits qubits when necessary
                             else:
                                 off_limits.add(g_control)
                                 off_limits.add(g_target)
-                                if last_layer > layer_id+count-1:
-                                    last_layer = layer_id+count-1
+                                if last_layer > layer_id + count - 1:
+                                    last_layer = layer_id + count - 1
                                 if g_control not in used:
                                     used.add(g_control)
                                 if g_target not in used:
@@ -484,8 +489,8 @@ class TransformCxCascade(TransformationPass):
                         if gate.name in ["barrier", "snapshot", "save", "load", "noise"]:
                             qargs = [self._wires_to_id[qarg] for qarg in gate.qargs]
                             if control in qargs:
-                                if last_layer > layer_id + count-1:
-                                    last_layer = layer_id + count-1
+                                if last_layer > layer_id + count - 1:
+                                    last_layer = layer_id + count - 1
                                 double_break = True
                                 break
                             u = []
@@ -498,21 +503,22 @@ class TransformCxCascade(TransformationPass):
                                     not_u.append(qarg)
                             if len(u) == len(qargs):
                                 # the transformation must be applied before this gate
-                                if last_layer > layer_id + count-1:
-                                    last_layer = layer_id + count-1
+                                if last_layer > layer_id + count - 1:
+                                    last_layer = layer_id + count - 1
                             elif len(u) == 0:
                                 # the transformation must be applied after this gate
                                 if last_layer < layer_id + count:
                                     last_layer = layer_id + count
                             else:
                                 # the transformation must be applied before this gate
-                                if last_layer > layer_id + count-1:
-                                    last_layer = layer_id + count-1
-                                for qarg in not_u+u:
+                                if last_layer > layer_id + count - 1:
+                                    last_layer = layer_id + count - 1
+                                for qarg in not_u + u:
                                     used.add(qarg)
                                     off_limits.add(qarg)
                         else:
-                            # check if one-qubits gates either interrupt the cascade, can be applied after or before
+                            # check if one-qubits gates either interrupt the cascade,
+                            # can be applied after or before
                             qarg = self._wires_to_id[gate.qargs[0]]
                             logger.debug(gate.op.__class__)
                             logger.debug('Gate Name: %s\tType: %s\tQarg: %s\tCarg: %s\tCond: %s' % (
@@ -548,7 +554,8 @@ class TransformCxCascade(TransformationPass):
             # apply all gates that were encountered before the cascade
             for u in before:
                 for gate in before[u]:
-                    self._extra_layers[last_layer].append((gate.op.__class__(*gate.op.params), gate.qargs, gate.cargs, gate.condition))
+                    self._extra_layers[last_layer].append(
+                        (gate.op.__class__(*gate.op.params), gate.qargs, gate.cargs, gate.condition))
 
             # apply the transformation
             self._extra_layers[last_layer].append((U2Gate(0, pi), [self._id_to_wires[control]], []))
@@ -556,21 +563,22 @@ class TransformCxCascade(TransformationPass):
                 self._extra_layers[last_layer].append((U2Gate(0, pi), [self._id_to_wires[t]], []))
             for i in range(len(targets) - 1, 0, -1):
                 self._extra_layers[last_layer].append((CnotGate(),
-                                                                 [self._id_to_wires[targets[i]],
-                                                                  self._id_to_wires[targets[i - 1]]], []))
+                                                       [self._id_to_wires[targets[i]],
+                                                        self._id_to_wires[targets[i - 1]]], []))
             self._extra_layers[last_layer].append(
                 (CnotGate(), [self._id_to_wires[targets[0]], self._id_to_wires[control]], []))
             for i in range(len(targets) - 1):
                 self._extra_layers[last_layer].append((CnotGate(),
-                                                                 [self._id_to_wires[targets[i + 1]],
-                                                                  self._id_to_wires[targets[i]]], []))
+                                                       [self._id_to_wires[targets[i + 1]],
+                                                        self._id_to_wires[targets[i]]], []))
             self._extra_layers[last_layer].append((U2Gate(0, pi), [self._id_to_wires[control]], []))
             for t in targets:
                 self._extra_layers[last_layer].append((U2Gate(0, pi), [self._id_to_wires[t]], []))
 
             # apply all gates that were encountered after the cascade
             for gate in after:
-                self._extra_layers[last_layer].append((gate.op.__class__(*gate.op.params), gate.qargs, gate.cargs, gate.condition))
+                self._extra_layers[last_layer].append(
+                    (gate.op.__class__(*gate.op.params), gate.qargs, gate.cargs, gate.condition))
         else:
             skip = None
 
