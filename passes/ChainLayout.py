@@ -154,7 +154,10 @@ class ChainLayout(AnalysisPass):
                     to_remove = True
                     if len(self._undirected_map[n1]) == 1 and len(explored)<max_qubits-1:
                         explored.add(n1)
-                        isolated_with_data.append((next, n1))
+                        if self.backend_prop is None:
+                            isolated_with_data.append((next, n1))
+                        else:
+                            isolated_with_data.append((next, n1, self.cx_reliab[(next, n1)]))
                         isolated.append(n1)
                         continue
                     for n2 in self.coupling_graph[n1].keys():
