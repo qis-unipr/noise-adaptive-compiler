@@ -152,6 +152,11 @@ class ChainLayout(AnalysisPass):
                 # check that the selected qubit does not lead to a dead end
                 for n1 in neighbors1:
                     to_remove = True
+                    if len(self._undirected_map[n1]) == 1 and len(explored)<max_qubits-1:
+                        explored.add(n1)
+                        isolated_with_data.append((next, n1))
+                        isolated.append(n1)
+                        continue
                     for n2 in self.coupling_graph[n1].keys():
                         if n2 not in explored or n2 == next:
                             to_remove = False
