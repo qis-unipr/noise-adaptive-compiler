@@ -217,7 +217,7 @@ class ChainLayout(AnalysisPass):
                         isolated.remove(next[1])
                         remaining -= 1
                         break
-        return full_map
+        return self.best_subset(full_map, num_qubits)
 
     def best_subset(self, chain, num_qubits):
         """Selects from the chain a subset of qubits with high cx reliability.
@@ -233,7 +233,7 @@ class ChainLayout(AnalysisPass):
             best_reliab = float('inf')
         else:
             best_reliab = 0
-        best = None
+        best = chain[:num_qubits]
         # use a moving window over the chain to select a subset with high cx reliability
         # if no backend information are provided, use the distance between qubits as a metric
         for offset in range(len(chain) - num_qubits):
