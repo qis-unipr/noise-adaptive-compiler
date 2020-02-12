@@ -199,16 +199,19 @@ class ChainLayout(AnalysisPass):
         # if the chain is not long enough, add the isolated qubits
         remaining = num_qubits - len(full_map)
         if remaining > 0:
-            logger.debug('Searching for isolated')
+            logger.debug('Checking isolated')
             if self.backend_prop is not None:
                 isolated_with_data = sorted(isolated_with_data, key=lambda x: x[2], reverse=True)
             while remaining > 0:
                 for next in isolated_with_data:
                     if next[0] in full_map:
                         if next[0] in isolated:
+                            logger.debug('Adding %d after %d' % (next[0], next[1]))
                             full_map.insert(full_map.index(next[0]) + 1, next[1])
                         else:
+                            logger.debug('Adding %d before %d' % (next[0], next[1]))
                             full_map.insert(full_map.index(next[0]), next[1])
+                        isolated_with_data.remove(next)
                         remaining -= 1
                         break
         return self.best_subset(full_map, num_qubits)
