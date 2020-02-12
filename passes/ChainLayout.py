@@ -86,10 +86,11 @@ class ChainLayout(AnalysisPass):
         Raises:
             TranspilerError: if invalid options
         """
-
+        
+        max_qubits = self.coupling_map.size()
         if num_qubits is None:
-            num_qubits = self.coupling_map.size()
-        if num_qubits > self.coupling_map.size():
+            num_qubits = max_qubits
+        if num_qubits > max_qubits:
             raise TranspilerError('Number of qubits greater than device.')
 
         current = 0
@@ -98,11 +99,13 @@ class ChainLayout(AnalysisPass):
         isolated_with_data = []
         explored = set()
         explored.add(current)
-
+        to_explore = sorted(list(range(max_qubits)))
+        to_explore.remove(current)
+        
         last_back_step = None
         # loop over the coupling map until all qubits no more qubits
         # can be connected to the chain
-        while True:
+        while len(explored) < max_qubits:
             neighbors = []
             no_neighbors = True
             for n in self.coupling_graph[current].keys():
@@ -116,71 +119,62 @@ class ChainLayout(AnalysisPass):
                     next = current + 1
                 else:
                     next = min(neighbors)
+                
+                explored.add(next)
+                to_explore.remove(next)
+                current = next
+                full_map.append(next)
+                
+                # check that there are still qubits to explore
+                if len(explored) < self.coupling_map.size() - 1:
+                    for n1 in self.coupling_graph[next].keys():
+                        if n1 not in explored:
+                            # check that the selected qubit does not lead to a dead end
+                            to_remove = True
+                            if len(self._undirected_map[n1]) == 1 and len(explored)<max_qubits-1:
+                                explored.add(n1)
+                                to_explore.remove(n1)
+                                if self.backend_prop is None:
+                                    isolated_with_data.append((next, n1))
+                                else:
+                                    isolated_with_data.append((next, n1, self.cx_reliab[(next, n1)]))
+                                isolated.append(n1)
+                                continue
+                            for n2 in self.coupling_graph[n1].keys():
+                                if n2 not in explored or n2 == next:
+                                    to_remove = False
+                            if to_remove is True:
+                                explored.add(n1)
+                                to_explore.remove(n1)
+                                if self.backend_prop is None:
+                                    isolated_with_data.append((next, n1))
+                                else:
+                                    isolated_with_data.append((next, n1, self.cx_reliab[(next, n1)]))
+                                isolated.append(n1)
+                
             else:
                 # if no neighbors are found, go back the chain until a new neighbor is found
                 # and restart the loop from there
-                if self.backend_prop is None:
-                    isolated_with_data.append((full_map[-2], current))
-                else:
-                    isolated_with_data.append(
-                        (full_map[-2], current, self.cx_reliab[(full_map[-2], current)]))
-                isolated.append(current)
-                full_map.remove(current)
-                current = full_map[-1]
-                logger.debug('last back step: %s' % str(last_back_step))
-                if current != last_back_step:
+                logger.debug('Last back step: %s' % str(last_back_step))
+                if full_map[-2] != last_back_step and abs(to_explore[0] - current) < len(to_explore):
+                    if self.backend_prop is None:
+                        isolated_with_data.append((full_map[-2], current))
+                    else:
+                        isolated_with_data.append((full_map[-2], current, self.cx_reliab[(full_map[-2], current)]))
+                    isolated.append(current)
+                    full_map.remove(current)
+                    current = full_map[-1]
                     last_back_step = current
                 else:
                     break
-                continue
-
-            explored.add(next)
-            current = next
-            full_map.append(next)
 
             logger.debug('Full chain: %s' % str(full_map))
             logger.debug('Explored: %s' % str(explored))
+            logger.debug('To Explore: %s' % str(to_explore))
             logger.debug('Isolated: %s' % str(isolated_with_data))
 
-            # check that there are still qubits to explore
-            if len(explored) < self.coupling_map.size() - 1:
-                neighbors1 = []
-                for n1 in self.coupling_graph[next].keys():
-                    if n1 not in explored:
-                        neighbors1.append(n1)
-
-                # check that the selected qubit does not lead to a dead end
-                for n1 in neighbors1:
-                    to_remove = True
-                    if len(self._undirected_map[n1]) == 1 and len(explored)<max_qubits-1:
-                        explored.add(n1)
-                        if self.backend_prop is None:
-                            isolated_with_data.append((next, n1))
-                        else:
-                            isolated_with_data.append((next, n1, self.cx_reliab[(next, n1)]))
-                        isolated.append(n1)
-                        continue
-                    for n2 in self.coupling_graph[n1].keys():
-                        if n2 not in explored or n2 == next:
-                            to_remove = False
-                    if to_remove is True:
-                        explored.add(n1)
-                        if self.backend_prop is None:
-                            isolated_with_data.append((next, n1))
-                        else:
-                            isolated_with_data.append((next, n1, self.cx_reliab[(next, n1)]))
-                        isolated.append(n1)
-
-            # break the loop when all qubits have been explored
-            if len(explored) == self.coupling_map.size():
-                # if enough qubits have been connected,
-                # return a subset with high cx reliability
-                if len(full_map) >= num_qubits:
-                    return self.best_subset(full_map, num_qubits)
-                break
-
         # check for isolated qubits
-        for q in range(self.coupling_map.size()):
+        for q in range(max_qubits):
             if q not in explored and q not in isolated:
                 for i in isolated:
                     if q in self.coupling_graph[i].keys():
@@ -203,18 +197,18 @@ class ChainLayout(AnalysisPass):
                             break
 
         # if the chain is not long enough, add the isolated qubits
-        logger.debug('Searching for isolated')
         remaining = num_qubits - len(full_map)
         if remaining > 0:
+            logger.debug('Searching for isolated')
             if self.backend_prop is not None:
                 isolated_with_data = sorted(isolated_with_data, key=lambda x: x[2], reverse=True)
             while remaining > 0:
                 for next in isolated_with_data:
                     if next[0] in full_map:
-                        logger.debug(next)
-                        full_map.insert(full_map.index(next[0]) + 1, next[1])
-                        isolated_with_data.remove(next)
-                        isolated.remove(next[1])
+                        if next[0] in isolated:
+                            full_map.insert(full_map.index(next[0]) + 1, next[1])
+                        else:
+                            full_map.insert(full_map.index(next[0]), next[1])
                         remaining -= 1
                         break
         return self.best_subset(full_map, num_qubits)
