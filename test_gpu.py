@@ -46,8 +46,8 @@ for circuit in os.listdir('circuits'):
     compiled = pass_manager.run(qc)
 
     noisy_result = execute(compiled, backend=QasmSimulator(), backend_properties=backend.properties(),
-                           backend_options=backend_options, coupling_map=coupling_map, shots=1024,
-                           pass_manager=PassManager()).result()
+                           backend_options=backend_options, coupling_map=coupling_map, shots=1024, optimization_level=0,
+                           noise_model=NoiseModel.from_backend(backend)).result()
 
     fidelity = hellinger_fidelity(ideal_counts, noisy_result.get_counts())
 
