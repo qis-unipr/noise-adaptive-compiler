@@ -37,7 +37,7 @@ from qiskit.transpiler.passes import UnitarySynthesis
 from qiskit.transpiler.passes import ApplyLayout
 from qiskit.transpiler.passes import CheckCXDirection
 
-from qiskit.transpiler import TranspilerError
+from qiskit.transpiler import TranspilerError, CouplingMap
 
 from passes import ChainLayout, NoiseAdaptiveSwap, TransformCxCascade
 
@@ -72,9 +72,9 @@ def noise_pass_manager(basis_gates=None, initial_layout=None, coupling_map=None,
         TranspilerError: if the passmanager config is invalid.
     """
     basis_gates = basis_gates or ['u3', 'cx']
-    backend=backend
+    backend = backend
     if backend is None or backend.configuration().simulator:
-        if backend_properties is None or coupling_map  is None:
+        if backend_properties is None or coupling_map is None:
             raise QiskitError("Backend is simulator or not specified, provide backend properties and coupling map.")
         coupling_map = coupling_map
         backend_properties = backend_properties
@@ -83,6 +83,9 @@ def noise_pass_manager(basis_gates=None, initial_layout=None, coupling_map=None,
             warnings.warn("A backend was provide, ignoring backend properties and coupling map", UserWarning)
         coupling_map = backend.configuration().coupling_map
         backend_properties = backend.properties()
+
+    if isinstance(coupling_map, list):
+        coupling_map = CouplingMap(couplinglist=coupling_map)
 
     initial_layout = initial_layout
     layout_method = layout_method or 'dense'
