@@ -36,6 +36,9 @@ for circuit in os.listdir('circuits'):
         continue
     qc = QuantumCircuit.from_qasm_file('circuits/{}'.format(circuit))
 
+    if qc.num_qubits > backend.configuration().n_qubits:
+        continue
+
     ideal_result = execute(qc, backend=Aer.get_backend('statevector_simulator')).result()
     ideal_counts = Statevector(ideal_result.get_statevector()).probabilities_dict()
 
