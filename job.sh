@@ -16,6 +16,6 @@ source "$CONDA_PREFIX/etc/profile.d/conda.sh"
 
 conda activate qiskit-0.20.0-cuda-10.2
 
-python3 mnist_neuron.py
+python3 test_gpu.py
 
 conda deactivate
