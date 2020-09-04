@@ -45,7 +45,7 @@ class TransformCxCascade(TransformationPass):
         super().__init__()
         if self.property_set['layout']:
             raise TranspilerError('TransformCxCascade pass must be run before any layout has been set.')
-        self.requires.append(Unroller(['u1', 'u2', 'u3', 'cx']))
+        self.requires.append(Unroller(['u1', 'u2', 'u3', 'cx', 'id']))
         self._num_qubits = None
         self._wires_to_id = {}
         self._id_to_wires = {}
@@ -148,7 +148,7 @@ class TransformCxCascade(TransformationPass):
                 depth = new_depth
             else:
                 break
-
+        print('TRANSFORMED')
         return new_dag
 
     def check_cascade(self, gate, layer_id):
