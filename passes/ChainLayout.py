@@ -63,6 +63,7 @@ class ChainLayout(AnalysisPass):
             raise TranspilerError('Number of qubits greater than device.')
         # get the chain of qubits as list of integers
         chain = self.chain(num_dag_qubits)
+        logger.info('Chain: %s' % str(chain))
         layout = Layout()
         chain_iter = 0
         # produce a layout from the chain
@@ -226,6 +227,8 @@ class ChainLayout(AnalysisPass):
         else:
             best_reliab = 0
         best = None
+        if len(chain) - num_qubits == 0:
+            return chain
         # use a moving window over the chain to select a subset with high cx reliability
         # if no backend information are provided, use the distance between qubits as a metric
         for offset in range(len(chain) - num_qubits):
