@@ -63,6 +63,7 @@ class ChainLayout(AnalysisPass):
             raise TranspilerError('Number of qubits greater than device.')
         # get the chain of qubits as list of integers
         chain = self.chain(num_dag_qubits)
+        print(chain)
         layout = Layout()
         chain_iter = 0
         # produce a layout from the chain
