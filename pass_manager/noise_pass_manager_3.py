@@ -71,7 +71,7 @@ def noise_pass_manager(basis_gates=None, initial_layout=None, coupling_map=None,
     Raises:
         TranspilerError: if the passmanager config is invalid.
     """
-    basis_gates = basis_gates or ['u3', 'cx']
+    basis_gates = basis_gates or ['u3', 'cx', 'id']
     backend = backend
     if backend is None or backend.configuration().simulator:
         if backend_properties is None or coupling_map is None:
