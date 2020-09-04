@@ -222,6 +222,7 @@ class ChainLayout(AnalysisPass):
         Returns:
             best_subset (list): subset with high cx reliability.
         """
+        print('Chain: ', chain)
         if self.backend_prop is None:
             best_reliab = float('inf')
         else:
