@@ -63,7 +63,7 @@ class ChainLayout(AnalysisPass):
             raise TranspilerError('Number of qubits greater than device.')
         # get the chain of qubits as list of integers
         chain = self.chain(num_dag_qubits)
-        print(chain)
+        logger.info('Chain: %s' % str(chain))
         layout = Layout()
         chain_iter = 0
         # produce a layout from the chain
@@ -222,7 +222,6 @@ class ChainLayout(AnalysisPass):
         Returns:
             best_subset (list): subset with high cx reliability.
         """
-        print('Chain: ', chain)
         if self.backend_prop is None:
             best_reliab = float('inf')
         else:
@@ -251,8 +250,6 @@ class ChainLayout(AnalysisPass):
                         tot_reliab += 1
                     else:
                         tot_reliab *= self.cx_reliab[(sub_set[q], sub_set[q + 1])]
-            print('Total reliab: ', tot_reliab)
-            print('Best reliab: ', best_reliab)
             if self.backend_prop is None:
                 if tot_reliab < best_reliab:
                     best_reliab = tot_reliab
