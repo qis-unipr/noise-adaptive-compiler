@@ -228,7 +228,8 @@ class ChainLayout(AnalysisPass):
         else:
             best_reliab = 0
         best = None
-        print('Offset: ', len(chain) - num_qubits)
+        if len(chain) - num_qubits == 0:
+            return chain
         # use a moving window over the chain to select a subset with high cx reliability
         # if no backend information are provided, use the distance between qubits as a metric
         for offset in range(len(chain) - num_qubits):
