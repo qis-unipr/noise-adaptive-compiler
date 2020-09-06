@@ -53,8 +53,9 @@ for circuit in os.listdir('circuits'):
     fidelity = hellinger_fidelity(ideal_counts, noise_result.get_counts())
 
     qiskit_results = execute(qc, backend=QasmSimulator(), backend_properties=backend.properties(),
-                           backend_options=backend_options, coupling_map=coupling_map, shots=1024, optimization_level=3,
-                           noise_model=NoiseModel.from_backend(backend)).result()
+                             backend_options=backend_options, coupling_map=coupling_map, shots=1024,
+                             optimization_level=3, basis_gates=['u1', 'u2', 'u3', 'cx', 'id'],
+                             noise_model=NoiseModel.from_backend(backend)).result()
 
     qiskit_fidelity = hellinger_fidelity(ideal_counts, qiskit_results.get_counts())
 
