@@ -1,4 +1,5 @@
 import os
+import sys
 import pickle as pkl
 
 from qiskit import execute, QuantumCircuit, Aer
@@ -21,11 +22,16 @@ backend_options["method"] = "density_matrix_gpu"
 backend_options["max_parallel_shots"] = 1
 backend_options["max_parallel_threads"] = 1
 
-pass_manager = noise_pass_manager(backend=backend, layout_method='noise_adaptive', routing_method='noise_adaptive',
+if len(sys.argv) > 1:
+    layout_method = sys.argv[1]
+else:
+    layout_method = 'dense'
+
+pass_manager = noise_pass_manager(backend=backend, layout_method=layout_method, routing_method='noise_adaptive',
                                   seed_transpiler=1000)
 
-if os.path.isfile('{}_hellinger_results_no_transform_noise_layout.pkl'.format(backend_name)):
-    with open('{}_hellinger_results_no_transform_noise_layout.pkl'.format(backend_name), 'rb') as f:
+if os.path.isfile('{}_hellinger_results_no_transform_{}.pkl'.format(backend_name, layout_method)):
+    with open('{}_hellinger_results_no_transform_{}.pkl'.format(backend_name, layout_method), 'rb') as f:
         results = pkl.load(f)
 else:
     results = dict()
@@ -52,14 +58,18 @@ for circuit in os.listdir('circuits'):
 
     fidelity = hellinger_fidelity(ideal_counts, noise_result.get_counts())
 
-    qiskit_results = execute(qc, backend=QasmSimulator(), backend_properties=backend.properties(),
+    pass_manager = noise_pass_manager(backend=backend, layout_method=layout_method,
+                                      seed_transpiler=1000)
+    compiled = pass_manager.run(qc)
+
+    qiskit_results = execute(compiled, backend=QasmSimulator(), backend_properties=backend.properties(),
                              backend_options=backend_options, coupling_map=coupling_map, shots=1024,
-                             optimization_level=3, basis_gates=['u1', 'u2', 'u3', 'cx', 'id'],
+                             optimization_level=0, basis_gates=['u1', 'u2', 'u3', 'cx', 'id'],
                              noise_model=NoiseModel.from_backend(backend)).result()
 
     qiskit_fidelity = hellinger_fidelity(ideal_counts, qiskit_results.get_counts())
 
     results[circuit.replace('.qasm', '')] = {'noise': fidelity, 'qiskit': qiskit_fidelity}
 
-    with open('{}_hellinger_results_no_transform_noise_layout.pkl'.format(backend_name), 'wb') as f:
+    with open('{}_hellinger_results_no_transform_{}.pkl'.format(backend_name, layout_method), 'wb') as f:
         pkl.dump(results, f)
