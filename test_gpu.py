@@ -35,9 +35,6 @@ routing_method = 'stochastic'
 if len(sys.argv) > 3:
     routing_method = sys.argv[3]
 
-pass_manager = noise_pass_manager(backend=backend, layout_method=layout_method, routing_method='noise_adaptive',
-                                  seed_transpiler=1000, transform=transform)
-
 if os.path.isfile('{}_hellinger_results_{}_{}_{}.pkl'.format(backend_name, transform, layout_method, routing_method)):
     with open('{}_hellinger_results_{}_{}_{}.pkl'.format(backend_name, transform, layout_method, routing_method), 'rb') as f:
         results = pkl.load(f)
@@ -55,9 +52,12 @@ for circuit in os.listdir('circuits'):
     print(circuit)
 
     ideal_result = execute(qc, backend=Aer.get_backend('statevector_simulator')).result()
-    ideal_counts = Statevector(ideal_result.get_statevector()).probabilities_dict()
+    ideal_counts = Statevector(ideal_result.get_statevector()).sample_counts(1024)
 
     qc.measure_active()
+
+    pass_manager = noise_pass_manager(backend=backend, layout_method=layout_method, routing_method='noise_adaptive',
+                                      seed_transpiler=1000, transform=transform)
     compiled = pass_manager.run(qc)
 
     noise_result = execute(compiled, backend=QasmSimulator(), backend_properties=backend.properties(),
