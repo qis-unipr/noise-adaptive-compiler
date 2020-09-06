@@ -9,7 +9,7 @@ print(results)
 
 labels = [circ for circ in results]
 
-configs = results[labels[0]].keys()
+configs = list(results[labels[0]].keys())
 
 data = [[results[circ][config] for circ in labels] for config in configs]
 
@@ -19,7 +19,7 @@ width = round(1/(len(configs)+1), 2)  # the width of the bars
 fig, ax = plt.subplots()
 rects = list()
 for i, series in enumerate(data):
-    rects.append(ax.bar(x + i*width, series, width, label='Men'))
+    rects.append(ax.bar(x + i*width, series, width, label=configs[i]))
 
 # Add some text for labels, title and custom x-axis tick labels, etc.
 # ax.set_title('Scores by group and gender')

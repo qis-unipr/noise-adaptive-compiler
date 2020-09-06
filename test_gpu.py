@@ -24,8 +24,8 @@ backend_options["max_parallel_threads"] = 1
 pass_manager = noise_pass_manager(backend=backend, layout_method='chain', routing_method='noise_adaptive',
                                   seed_transpiler=1000)
 
-if os.path.isfile('{}_hellinger_results.pkl'.format(backend_name)):
-    with open('{}_hellinger_results.pkl'.format(backend_name), 'rb') as f:
+if os.path.isfile('{}_hellinger_results_no_transform.pkl'.format(backend_name)):
+    with open('{}_hellinger_results_no_transform.pkl'.format(backend_name), 'rb') as f:
         results = pkl.load(f)
 else:
     results = dict()
@@ -61,5 +61,5 @@ for circuit in os.listdir('circuits'):
 
     results[circuit.replace('.qasm', '')] = {'noise': fidelity, 'qiskit': qiskit_fidelity}
 
-    with open('{}_hellinger_results.pkl'.format(backend_name), 'wb') as f:
+    with open('{}_hellinger_results_no_transform.pkl'.format(backend_name), 'wb') as f:
         pkl.dump(results, f)

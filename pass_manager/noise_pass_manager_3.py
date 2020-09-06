@@ -44,7 +44,7 @@ from passes import ChainLayout, NoiseAdaptiveSwap, TransformCxCascade
 
 def noise_pass_manager(basis_gates=None, initial_layout=None, coupling_map=None,
                        layout_method=None, translation_method=None, seed_transpiler=None, backend=None,
-                       routing_method=None, backend_properties=None) -> PassManager:
+                       routing_method=None, backend_properties=None, transform=False) -> PassManager:
     """Level 3 pass manager: heavy optimization by noise adaptive qubit mapping and
     gate cancellation using commutativity rules and unitary synthesis.
 
@@ -93,13 +93,8 @@ def noise_pass_manager(basis_gates=None, initial_layout=None, coupling_map=None,
     translation_method = translation_method or 'translator'
     seed_transpiler = seed_transpiler
 
-
-    # 0. Unroll to 1q or 2q gates
+    # 1. Unroll to 1q or 2q gates
     _unroll3q = Unroll3qOrMore()
-
-    # 1. Transform cx cascades
-
-    _transform = TransformCxCascade()
 
     # 2. Layout on good qubits if calibration info available, otherwise on dense links
     _given_layout = SetLayout(initial_layout)
@@ -191,7 +186,9 @@ def noise_pass_manager(basis_gates=None, initial_layout=None, coupling_map=None,
     # Build pass manager
     pm3 = PassManager()
     pm3.append(_unroll3q)
-    pm3.append(_transform)
+    if transform:
+        _transform = TransformCxCascade()
+        pm3.append(_transform)
     pm3.append(_reset + _meas)
     if coupling_map:
         pm3.append(_given_layout)
