@@ -2,7 +2,8 @@ import pickle as pkl
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot(results_file):
+
+def plot(results_file, metric):
     with open(results_file, 'rb') as f:
         results = pkl.load(f)
 
@@ -10,7 +11,7 @@ def plot(results_file):
 
     configs = list(results[labels[0]].keys())
 
-    data = [[results[circ][config] for circ in labels] for config in configs]
+    data = [[results[circ][config][metric] for circ in labels] for config in configs]
 
     x = 2 * np.arange(len(results))  # the label locations
     width = 0.25  # the width of the bars
@@ -22,7 +23,7 @@ def plot(results_file):
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
     # ax.set_title('Scores by group and gender')
-    ax.set_ylabel('Hellinger Fidelity')
+    ax.set_ylabel(metric)
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
@@ -43,7 +44,7 @@ def plot(results_file):
 
     fig.tight_layout()
 
-    plt.savefig(results_file.replace('.pkl', '.svg'))
+    plt.savefig(results_file.replace('.pkl', '_{}.svg'.format(metric)))
 
 backend = 'fake_melbourne'
 
@@ -51,9 +52,12 @@ layouts = ['chain', 'dense', 'noise_adaptive']
 
 routings = ['basic', 'stochastic', 'lookahead']
 
+metrics = ['hellinger', 'hog', 'ce', 'l1']
+
 for layout in layouts:
     for routing in routings:
-        plot('{}_hellinger_results_{}_{}_{}.pkl'.format(backend, 'True', layout, routing))
-        plot('{}_hellinger_results_{}_{}_{}.pkl'.format(backend, 'False', layout, routing))
+        for metric in metrics:
+            plot('{}_results_{}_{}_{}.pkl'.format(backend, 'True', layout, routing), metric)
+            plot('{}_results_{}_{}_{}.pkl'.format(backend, 'False', layout, routing), metric)
 
 
