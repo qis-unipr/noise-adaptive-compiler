@@ -7,7 +7,6 @@ from qiskit.providers.aer import QasmSimulator
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.quantum_info import Statevector
 from qiskit.test.mock import FakeMelbourne, FakeBogota
-from qiskit.transpiler import PassManager
 
 from pass_manager import noise_pass_manager
 from qiskit.quantum_info.analysis import hellinger_fidelity
@@ -47,13 +46,19 @@ for circuit in os.listdir('circuits'):
     qc.measure_active()
     compiled = pass_manager.run(qc)
 
-    noisy_result = execute(compiled, backend=QasmSimulator(), backend_properties=backend.properties(),
+    noise_result = execute(compiled, backend=QasmSimulator(), backend_properties=backend.properties(),
                            backend_options=backend_options, coupling_map=coupling_map, shots=1024, optimization_level=0,
                            noise_model=NoiseModel.from_backend(backend)).result()
 
-    fidelity = hellinger_fidelity(ideal_counts, noisy_result.get_counts())
+    fidelity = hellinger_fidelity(ideal_counts, noise_result.get_counts())
 
-    results[circuit.replace('.qasm', '')] = fidelity
+    qiskit_results = execute(qc, backend=QasmSimulator(), backend_properties=backend.properties(),
+                           backend_options=backend_options, coupling_map=coupling_map, shots=1024, optimization_level=3,
+                           noise_model=NoiseModel.from_backend(backend)).result()
+
+    qiskit_fidelity = hellinger_fidelity(ideal_counts, qiskit_results.get_counts())
+
+    results[circuit.replace('.qasm', '')] = {'noise': fidelity, 'qiskit': qiskit_fidelity}
 
     with open('{}_hellinger_results.pkl'.format(backend_name), 'wb') as f:
         pkl.dump(results, f)
