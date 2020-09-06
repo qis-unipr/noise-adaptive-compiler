@@ -22,14 +22,14 @@ backend_options["method"] = "density_matrix_gpu"
 backend_options["max_parallel_shots"] = 1
 backend_options["max_parallel_threads"] = 1
 
-layout_method = 'dense'
-if len(sys.argv) > 1:
-    layout_method = sys.argv[1]
-
 transform = False
-if len(sys.argv) > 2:
-    if sys.argv[2] == 'true':
+if len(sys.argv) > 1:
+    if sys.argv[1] == 'true':
         transform = True
+
+layout_method = 'dense'
+if len(sys.argv) > 2:
+    layout_method = sys.argv[2]
 
 routing_method = 'stochastic'
 if len(sys.argv) > 3:
