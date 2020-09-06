@@ -22,16 +22,24 @@ backend_options["method"] = "density_matrix_gpu"
 backend_options["max_parallel_shots"] = 1
 backend_options["max_parallel_threads"] = 1
 
+layout_method = 'dense'
 if len(sys.argv) > 1:
     layout_method = sys.argv[1]
-else:
-    layout_method = 'dense'
+
+transform = False
+if len(sys.argv) > 2:
+    if sys.argv[2] == 'true':
+        transform = True
+
+routing_method = 'stochastic'
+if len(sys.argv) > 3:
+    routing_method = sys.argv[3]
 
 pass_manager = noise_pass_manager(backend=backend, layout_method=layout_method, routing_method='noise_adaptive',
-                                  seed_transpiler=1000)
+                                  seed_transpiler=1000, transform=transform)
 
-if os.path.isfile('{}_hellinger_results_no_transform_{}.pkl'.format(backend_name, layout_method)):
-    with open('{}_hellinger_results_no_transform_{}.pkl'.format(backend_name, layout_method), 'rb') as f:
+if os.path.isfile('{}_hellinger_results_{}_{}_{}.pkl'.format(backend_name, transform, layout_method, routing_method)):
+    with open('{}_hellinger_results_{}_{}_{}.pkl'.format(backend_name, transform, layout_method, routing_method), 'rb') as f:
         results = pkl.load(f)
 else:
     results = dict()
@@ -59,7 +67,7 @@ for circuit in os.listdir('circuits'):
     fidelity = hellinger_fidelity(ideal_counts, noise_result.get_counts())
 
     pass_manager = noise_pass_manager(backend=backend, layout_method=layout_method,
-                                      seed_transpiler=1000)
+                                      seed_transpiler=1000, routing_method=routing_method)
     compiled = pass_manager.run(qc)
 
     qiskit_results = execute(compiled, backend=QasmSimulator(), backend_properties=backend.properties(),
@@ -71,5 +79,5 @@ for circuit in os.listdir('circuits'):
 
     results[circuit.replace('.qasm', '')] = {'noise': fidelity, 'qiskit': qiskit_fidelity}
 
-    with open('{}_hellinger_results_no_transform_{}.pkl'.format(backend_name, layout_method), 'wb') as f:
+    with open('{}_hellinger_results_{}_{}_{}.pkl'.format(backend_name, transform, layout_method, routing_method), 'wb') as f:
         pkl.dump(results, f)
