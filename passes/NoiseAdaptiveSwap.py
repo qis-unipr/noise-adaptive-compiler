@@ -45,7 +45,7 @@ class NoiseAdaptiveSwap(TransformationPass):
 
         self._qreg = None
         if isinstance(coupling_map, list):
-            self._coupling_map = CouplingMap(coupling_map)
+            self._coupling_map = CouplingMap(couplinglist=coupling_map)
         elif isinstance(coupling_map, CouplingMap):
             self._coupling_map = coupling_map
         else:
@@ -112,7 +112,7 @@ class NoiseAdaptiveSwap(TransformationPass):
         if len(dag.qregs) != 1 or dag.qregs.get('q', None) is None:
             raise TranspilerError('Basic swap runs on physical circuits only')
 
-        if len(dag.qubits()) > len(self._coupling_map.physical_qubits):
+        if len(dag.qubits()) > self._coupling_map.size():
             raise TranspilerError('The layout does not match the amount of qubits in the DAG')
 
         canonical_register = dag.qregs['q']
