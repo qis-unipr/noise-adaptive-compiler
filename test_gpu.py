@@ -72,9 +72,9 @@ for circuit in os.listdir('circuits'):
 
     counts = noise_result.get_counts()
     fidelity = hellinger_fidelity(ideal_counts, counts)
-    hog = hog(counts, ideal_probs)
-    ce = cross_entropy(counts, ideal_probs)
-    l1 = l1_norm(counts, ideal_probs)
+    noisy_hog = hog(counts, ideal_probs)
+    noisy_ce = cross_entropy(counts, ideal_probs)
+    noisy_l1 = l1_norm(counts, ideal_probs)
 
     pass_manager = noise_pass_manager(backend=backend, layout_method=layout_method,
                                       seed_transpiler=1000, routing_method=routing_method)
@@ -86,12 +86,12 @@ for circuit in os.listdir('circuits'):
                              noise_model=NoiseModel.from_backend(backend)).result()
 
     qiskit_counts = qiskit_results.get_counts()
-    qiskit_fidelity = hellinger_fidelity(ideal_counts, counts)
-    qiskit_hog = hog(counts, ideal_probs)
-    qiskit_ce = cross_entropy(counts, ideal_probs)
-    qiskit_l1 = l1_norm(counts, ideal_probs)
+    qiskit_fidelity = hellinger_fidelity(ideal_counts, qiskit_counts)
+    qiskit_hog = hog(qiskit_counts, ideal_probs)
+    qiskit_ce = cross_entropy(qiskit_counts, ideal_probs)
+    qiskit_l1 = l1_norm(qiskit_counts, ideal_probs)
 
-    results[circuit.replace('.qasm', '')] = {'noise': {'hellinger': fidelity, 'hog': hog, 'ce': ce, 'l1': l1},
+    results[circuit.replace('.qasm', '')] = {'noise': {'hellinger': fidelity, 'hog': noisy_hog, 'ce': noisy_ce, 'l1': noisy_l1},
                                              'qiskit': {'hellinger': qiskit_fidelity, 'hog': qiskit_hog, 'ce': qiskit_ce, 'l1': qiskit_l1}}
 
     with open('{}_results_{}_{}_{}.pkl'.format(backend_name, transform, layout_method, routing_method), 'wb') as f:
