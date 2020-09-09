@@ -148,7 +148,6 @@ class TransformCxCascade(TransformationPass):
                 depth = new_depth
             else:
                 break
-        print('TRANSFORMED')
         return new_dag
 
     def check_cascade(self, gate, layer_id):

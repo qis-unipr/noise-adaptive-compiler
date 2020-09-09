@@ -42,7 +42,7 @@ class ChainLayout(AnalysisPass):
                 if ginfo.gate == 'cx':
                     for item in ginfo.parameters:
                         if item.name == 'gate_error':
-                            g_reliab = 1.0 - item.value
+                            g_reliab = max(1.0 - item.value, 10**(-10))
                             break
                         else:
                             g_reliab = 1.0
