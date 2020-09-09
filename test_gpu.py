@@ -7,13 +7,16 @@ from qiskit.providers.aer import QasmSimulator
 from qiskit.providers.aer.noise import NoiseModel
 from qiskit.quantum_info import Statevector
 from qiskit.test.mock import FakeMelbourne, FakeBogota
+from qiskit import IBMQ
+IBMQ.load_account()
+provider = IBMQ.get_provider()
 
 from pass_manager import noise_pass_manager
 from qiskit.quantum_info.analysis import hellinger_fidelity
 
 from metrics import hog, cross_entropy, l1_norm
 
-backend = FakeMelbourne()
+backend = provider.get_backend('ibmq_16_melbourne')
 properties = backend.properties()
 coupling_map = backend.configuration().coupling_map
 backend_name = backend.name()
