@@ -6,15 +6,17 @@ def l1_norm(real_counts, ideal_probs):
     n_bits = len(list(ideal_probs.keys())[0])
     keys = []
     for i in range(2**n_bits):
-        keys.append(bin(i)[2:].zfill(n_bits))
+        keys.append(bin(i).split('b')[1].zfill(n_bits))
     real_ideal = {}
     for key in keys:
-        if key in real_counts and keys in ideal_probs:
+        if key in real_counts and key in ideal_probs:
             real_ideal[key] = (real_counts[key] / total_real, ideal_probs[key])
         elif key in real_counts:
             real_ideal[key] = (real_counts[key] / total_real, 0.0)
-        else:
+        elif key in ideal_probs:
             real_ideal[key] = (0.0, ideal_probs[key])
+        else:
+            real_ideal[key] = (0.0, 0.0)
     l1n = reduce(lambda a, b: abs(a) + abs(b), list(map(
         lambda x: real_ideal[x][0] - real_ideal[x][1], real_ideal)))
     return l1n
