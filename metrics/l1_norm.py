@@ -6,7 +6,7 @@ def l1_norm(real_counts, ideal_probs):
     n_bits = len(list(ideal_probs.keys())[0])
     keys = []
     for i in range(2**n_bits):
-        keys.append(str(bin(i)[2:]).zfill(n_bits))
+        keys.append(bin(i).split('b')[1].zfill(n_bits))
     real_ideal = {}
     for key in keys:
         if key in real_counts and keys in ideal_probs:
