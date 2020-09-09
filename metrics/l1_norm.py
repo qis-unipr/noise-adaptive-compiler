@@ -9,7 +9,7 @@ def l1_norm(real_counts, ideal_probs):
         keys.append(bin(i).split('b')[1].zfill(n_bits))
     real_ideal = {}
     for key in keys:
-        if key in real_counts and keys in ideal_probs:
+        if key in real_counts and key in ideal_probs:
             real_ideal[key] = (real_counts[key] / total_real, ideal_probs[key])
         elif key in real_counts:
             real_ideal[key] = (real_counts[key] / total_real, 0.0)
