@@ -15,7 +15,7 @@ class ChainLayout(AnalysisPass):
     If necessary, such outliers will be inserted in the chain after one of their neighbors.
     """
 
-    def __init__(self, coupling_map, backend_prop=None):
+    def __init__(self, coupling_map, backend_prop=None, readout=False):
         """ChainLayout initializer.
 
         Args:
@@ -37,6 +37,15 @@ class ChainLayout(AnalysisPass):
         self.backend_prop = backend_prop
         # collect cx reliability data
         if self.backend_prop is not None:
+            if readout:
+                self.readout_reliability = dict()
+                i = 0
+                for q in backend_prop.qubits:
+                    for info in q:
+                        if info.name == 'readout_error':
+                            self.readout_reliability[i] = 1.0 - info.value
+                            i += 1
+
             self.cx_reliab = dict()
             for ginfo in self.backend_prop.gates:
                 if ginfo.gate == 'cx':
@@ -48,6 +57,10 @@ class ChainLayout(AnalysisPass):
                             g_reliab = 1.0
                     self.cx_reliab[(ginfo.qubits[0], ginfo.qubits[1])] = g_reliab
                     self.cx_reliab[(ginfo.qubits[1], ginfo.qubits[0])] = g_reliab
+                    if readout:
+                        qubits_readout_reliab = self.readout_reliability[ginfo.qubits[0]] * self.readout_reliability[ginfo.qubits[1]]
+                        self.cx_reliab[(ginfo.qubits[0], ginfo.qubits[1])] *= qubits_readout_reliab
+                        self.cx_reliab[(ginfo.qubits[1], ginfo.qubits[0])] *= qubits_readout_reliab
 
     def run(self, dag):
         """Sets the layout property set.
@@ -108,6 +121,14 @@ class ChainLayout(AnalysisPass):
             no_neighbors = True
             for n in self.coupling_graph[current].keys():
                 if n not in explored:
+                    if self.check_isolated_not_last(n, explored):
+                        if self.backend_prop is None:
+                            isolated_with_data.append((current, n))
+                        else:
+                            isolated_with_data.append(
+                                (current, n, self.cx_reliab[(current, n)]))
+                        isolated.append(n)
+                        explored.add(n)
                     no_neighbors = False
                     neighbors.append(n)
             logger.debug('Neighbors: %s' % str(neighbors))
@@ -211,6 +232,13 @@ class ChainLayout(AnalysisPass):
                         remaining -= 1
                         break
         return full_map
+
+    def check_isolated_not_last(self, q, explored):
+        isolated = True
+        for n in self.coupling_graph[q].keys():
+            if n not in explored:
+                isolated = False
+        return (len(explored) >= self.coupling_map.size()-2 and isolated) or not isolated
 
     def best_subset(self, chain, num_qubits):
         """Selects from the chain a subset of qubits with high cx reliability.
