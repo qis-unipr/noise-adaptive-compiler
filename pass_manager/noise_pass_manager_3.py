@@ -43,7 +43,7 @@ from passes import ChainLayout, NoiseAdaptiveSwap, TransformCxCascade
 def noise_pass_manager(basis_gates=None, initial_layout=None, coupling_map=None,
                        layout_method=None, translation_method=None, seed_transpiler=None, backend=None,
                        routing_method=None, backend_properties=None, transform=False,
-                       invert_score=False, swap_score=0, readout=False, alpha=0.5, next_gates=5, front=False) -> PassManager:
+                       readout=True, alpha=0.5, next_gates=5, front=True) -> PassManager:
     """Level 3 pass manager: heavy optimization by noise adaptive qubit mapping and
     gate cancellation using commutativity rules and unitary synthesis.
 
