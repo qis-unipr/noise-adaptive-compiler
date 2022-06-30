@@ -142,7 +142,7 @@ def noise_pass_manager(basis_gates=None, initial_layout=None, coupling_map=None,
     elif routing_method == 'sabre':
         _swap += [SabreSwap(coupling_map, heuristic='decay', seed=seed_transpiler)]
     elif routing_method == 'noise_adaptive':
-        _swap += [NoiseAdaptiveSwap(coupling_map, backend_properties, invert_score=invert_score, swap_score=swap_score,
+        _swap += [NoiseAdaptiveSwap(coupling_map, backend_properties, swap_score=swap_score,
                                     readout=readout, alpha=alpha, next_gates=next_gates, front=front)]
     else:
         raise TranspilerError("Invalid routing method %s." % routing_method)
